@@ -3,14 +3,17 @@ Be sure you have minitorch installed in you Virtual Env.
 >>> pip install -Ue .
 """
 import random
-
+# import sys
+# sys.path.append("/home/maryna/HSE/DL2/workspace/HW1/minitorch-module-1-horbachmp")
 import minitorch
 
 
 class Network(minitorch.Module):
     def __init__(self, hidden_layers):
         super().__init__()
-        raise NotImplementedError("Need to include this file from past assignment.")
+        self.layer1 = Linear(2, hidden_layers)
+        self.layer2 = Linear(hidden_layers, hidden_layers)
+        self.layer3 = Linear(hidden_layers, 1)
 
     def forward(self, x):
         middle = [h.relu() for h in self.layer1.forward(x)]
@@ -39,7 +42,13 @@ class Linear(minitorch.Module):
             )
 
     def forward(self, inputs):
-        raise NotImplementedError("Need to include this file from past assignment.")
+        out = []
+        for i in range(len(self.weights[0])):
+            curr_out = self.bias[i].value
+            for j in range(len(self.weights)):
+                curr_out += self.weights[j][i].value * inputs[j]
+            out.append(curr_out)
+        return out
 
 
 def default_log_fn(epoch, total_loss, correct, losses):
@@ -98,8 +107,16 @@ class ScalarTrain:
 
 
 if __name__ == "__main__":
+    # PTS = 50
+    # HIDDEN = 2
+    # RATE = 0.5
+    # data = minitorch.datasets["Simple"](PTS)
+    # ScalarTrain(HIDDEN).train(data, RATE)
+
     PTS = 50
-    HIDDEN = 2
+    DATASET = minitorch.datasets["Xor"](PTS)
+
+    HIDDEN = 10
     RATE = 0.5
     data = minitorch.datasets["Simple"](PTS)
     ScalarTrain(HIDDEN).train(data, RATE)
