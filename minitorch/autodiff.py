@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Iterable, List, Tuple
+from typing import Any, Iterable, Tuple
 
 from typing_extensions import Protocol
 
@@ -22,7 +22,12 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     Returns:
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+    vals1 = list(vals)
+    vals1[arg] += epsilon
+
+    vals2 = list(vals)
+    vals2[arg] -= epsilon
+    return (f(*vals1) - f(*vals2)) / (2 * epsilon)
 
 
 variable_count = 1
@@ -60,7 +65,19 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     Returns:
         Non-constant Variables in topological order starting from the right.
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+    order = []
+    visited = set()
+
+    def visit(var):
+        if var.unique_id not in visited:
+            visited.add(var.unique_id)
+            if var.history is not None:
+                for parent in var.parents:
+                    visit(parent)
+            order.append(var)
+    visit(variable)
+
+    return order[::-1]
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -74,7 +91,26 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+
+    if variable.is_constant():
+        return
+
+    order = topological_sort(variable)
+    derivs = {variable.unique_id: deriv}
+    vars = {variable.unique_id: variable}
+
+    for var in order:
+        if var.unique_id not in derivs:
+            derivs[var.unique_id] = 0
+        if var.is_leaf():
+            var.accumulate_derivative(derivs[var.unique_id])
+        elif var.history is not None:
+            for parent, deriv_parent in var.chain_rule(derivs[var.unique_id]):
+                if parent.unique_id in derivs:
+                    derivs[parent.unique_id] += deriv_parent
+                else:
+                    vars[parent.unique_id] = parent
+                    derivs[parent.unique_id] = deriv_parent
 
 
 @dataclass

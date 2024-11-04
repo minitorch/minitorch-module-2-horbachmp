@@ -43,8 +43,7 @@ def index_to_position(index: Index, strides: Strides) -> int:
         Position in storage
     """
 
-    # TODO: Implement for Task 2.1.
-    raise NotImplementedError("Need to implement for Task 2.1")
+    return index @ strides.T
 
 
 def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
@@ -60,8 +59,12 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
         out_index : return index corresponding to position.
 
     """
-    # TODO: Implement for Task 2.1.
-    raise NotImplementedError("Need to implement for Task 2.1")
+    mult = prod(shape)
+    for pos in range(out_index.size):
+        mult //= shape[pos]
+        out_index[pos] = ordinal // mult
+        ordinal %= mult
+    
 
 
 def broadcast_index(
@@ -83,8 +86,12 @@ def broadcast_index(
     Returns:
         None
     """
-    # TODO: Implement for Task 2.2.
-    raise NotImplementedError("Need to implement for Task 2.2")
+    delta = len(big_shape) - len(shape)
+    for i in range(len(shape)):
+        if shape[i] > max(1, big_index[delta + i]):
+            out_index[i] = big_index[delta + i]
+        else:
+            out_index[i] = 0
 
 
 def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
@@ -101,8 +108,19 @@ def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
     Raises:
         IndexingError : if cannot broadcast
     """
-    # TODO: Implement for Task 2.2.
-    raise NotImplementedError("Need to implement for Task 2.2")
+    ans = []
+    if len(shape1) < len(shape2):
+        shape1, shape2 = shape2, shape1
+    delta = len(shape1) - len(shape2)
+    for i in range(len(shape1)):
+        if i < delta:
+            ans.append(shape1[i])
+        else:
+            if max(shape1[i], shape2[i-delta]) % min(shape1[i], shape2[i-delta]) != 0:
+                raise IndexingError
+            ans.append(max(shape1[i], shape2[i-delta]))
+    return tuple(ans)
+
 
 
 def strides_from_shape(shape: UserShape) -> UserStrides:
@@ -131,8 +149,8 @@ class TensorData:
         if isinstance(storage, np.ndarray):
             self._storage = storage
         else:
+            
             self._storage = array(storage, dtype=float64)
-
         if strides is None:
             strides = strides_from_shape(shape)
 
@@ -221,9 +239,12 @@ class TensorData:
         assert list(sorted(order)) == list(
             range(len(self.shape))
         ), f"Must give a position to each dimension. Shape: {self.shape} Order: {order}"
-
-        # TODO: Implement for Task 2.1.
-        raise NotImplementedError("Need to implement for Task 2.1")
+        shape_ans = []
+        strides_ans = []
+        for i in order:
+            shape_ans.append(self.shape[i])
+            strides_ans.append(self.strides[i])
+        return TensorData(self._storage.copy(), tuple(shape_ans), tuple(strides_ans))
 
     def to_string(self) -> str:
         s = ""
